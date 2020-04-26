@@ -1,7 +1,7 @@
 class Snake {
    
   int score = 1;
-  int lifeLeft = 200;  //amount of moves the snake can make before it dies
+  int lifeLeft = 50;  //amount of moves the snake can make before it dies
   int lifetime = 0;  //amount of time the snake has been alive
   int xVel, yVel;
   int foodItterate = 0;  //itterator to run through the foodlist (used for replay)
@@ -14,6 +14,8 @@ class Snake {
   float[] vision;  //snakes vision
   float[] decision;  //snakes decision
   
+  int nb_infos = 3;
+
   PVector head;
   
   ArrayList<PVector> body;  //snakes body
@@ -23,68 +25,47 @@ class Snake {
   NeuralNet brain;
   
   Snake() {
-    this(hidden_layers);
+    this(HIDDEN_LAYERS);
   }
-  
-  Snake(int layers) {
-    head = new PVector(800,height/2);
+
+  Snake(int layer) {
+    head = new PVector(X_GRID, HEIGHT/2);
     food = new Food();
     body = new ArrayList<PVector>();
+    
     if(!humanPlaying) {
-      vision = new float[24];
-      decision = new float[4];
+      createSnake();
+
+      brain = new NeuralNet(24, HIDDEN_NODES, 4, layer);
       foodList = new ArrayList<Food>();
       foodList.add(food.clone());
-      brain = new NeuralNet(24,hidden_nodes,4,layers);
-      body.add(new PVector(800,(height/2)+SIZE));  
-      body.add(new PVector(800,(height/2)+(2*SIZE)));
-      score+=2;
     }
   }
-  
+
   Snake(ArrayList<Food> foods) {  //this constructor passes in a list of food positions so that a replay can replay the best snake
-     replay = true;
-     vision = new float[24];
-     decision = new float[4];
-     body = new ArrayList<PVector>();
-     foodList = new ArrayList<Food>(foods.size());
-     
-     for(Food f: foods) {  //clone all the food positions in the foodlist
-       foodList.add(f.clone());
-     };
-     
-     food = foodList.get(foodItterate);
-     foodItterate++;
-     
-     head = new PVector(800,height/2);
-     body.add(new PVector(800,(height/2)+SIZE));
-     body.add(new PVector(800,(height/2)+(2*SIZE)));
-     score += 2;
+    createSnake();
+
+    replay = true;
+    foodList = new ArrayList<Food>(foods.size());
+    
+    for(Food f: foods) {  //clone all the food positions in the foodlist
+      foodList.add(f.clone());
+    };
+
+    food = foodList.get(foodItterate);
+    foodItterate++;
   }
   
-  boolean bodyCollide(float x, float y) {  //check if a position collides with the snakes body
-     for(int i = 0; i < body.size(); i++) {
-        if(x == body.get(i).x && y == body.get(i).y)  {
-           return true;
-        }
-     }
-     return false;
+  void createSnake(){
+    vision = new float[24];
+    decision = new float[4];
+    body = new ArrayList<PVector>();
+    head = new PVector(X_GRID, HEIGHT/2);
+    body.add(new PVector(X_GRID, (HEIGHT/2)+SIZE));  
+    body.add(new PVector(X_GRID, (HEIGHT/2)+(2*SIZE)));
+    score += 2;
   }
-  
-  boolean foodCollide(float x, float y) {  //check if a position collides with the food
-     if(x == food.pos.x && y == food.pos.y) {
-         return true;
-     }
-     return false;
-  }
-  
-  boolean wallCollide(float x, float y) {  //check if a position collides with the wall
-     if(x >= width-(SIZE) || x < 400 + SIZE || y >= height-(SIZE) || y < SIZE) {
-       return true;
-     }
-     return false;
-  }
-  
+
   void show() {  //show the snake
      food.show();
      fill(255);
@@ -155,13 +136,13 @@ class Snake {
   }
   
   Snake clone() {  //clone the snake
-     Snake clone = new Snake(hidden_layers);
+     Snake clone = new Snake(HIDDEN_LAYERS);
      clone.brain = brain.clone();
      return clone;
   }
   
   Snake crossover(Snake parent) {  //crossover the snake with another snake
-     Snake child = new Snake(hidden_layers);
+     Snake child = new Snake(HIDDEN_LAYERS);
      child.brain = brain.crossover(parent.brain);
      return child;
   }
@@ -199,7 +180,6 @@ class Snake {
       new PVector(-SIZE,-SIZE)
     };
 
-    int nb_infos = 3;
     vision = new float[directions.length*nb_infos];
 
     for(int i = 0; i < directions.length; i++) {
@@ -212,14 +192,14 @@ class Snake {
   }
 
   float[] lookInDirection(PVector direction) {  //look in a direction and check for food, body and wall
-    float look[] = new float[3];
+    float look[] = new float[nb_infos];
     PVector pos = new PVector(head.x,  head.y);
-    float distance = 0;
     boolean foodFound = false;
     boolean bodyFound = false;
     pos.add(direction);
-    distance +=1;
-    while (!wallCollide(pos.x,pos.y)) {
+    float distance = 1;
+
+    while (!wallCollide(pos.x, pos.y)) {
       if(!foodFound && foodCollide(pos.x,pos.y)) {
         foodFound = true;
         look[0] = 1;
@@ -228,33 +208,57 @@ class Snake {
          bodyFound = true;
          look[1] = 1;
       }
+
       if(replay && seeVision) {
         stroke(0,255,0);
         point(pos.x,pos.y);
         if(foodFound) {
-           noStroke();
-           fill(255,255,51);
-           ellipseMode(CENTER);
-           ellipse(pos.x,pos.y,5,5); 
+           drawEllipse(pos,255,255,51);
         }
         if(bodyFound) {
-           noStroke();
-           fill(102,0,102);
-           ellipseMode(CENTER);
-           ellipse(pos.x,pos.y,5,5); 
+           drawEllipse(pos,102,0,102);
         }
       }
       pos.add(direction);
       distance +=1;
     }
+
     if(replay && seeVision) {
-       noStroke();
-       fill(0,255,0);
-       ellipseMode(CENTER);
-       ellipse(pos.x,pos.y,5,5); 
+       drawEllipse(pos,0,255,0);
     }
+
     look[2] = 1/distance;
     return look;
+  }
+
+  void drawEllipse(PVector pos, int r, int g, int b) {
+    noStroke();
+    fill(r, g, b);
+    ellipseMode(CENTER);
+    ellipse(pos.x,pos.y,5,5); 
+  }
+  
+  boolean wallCollide(float x, float y) {  //check if a position collides with the wall
+     if(x >= WIDTH-(SIZE) || x < GRID + SIZE || y >= HEIGHT-(SIZE) || y < SIZE) {
+       return true;
+     }
+     return false;
+  }
+
+  boolean bodyCollide(float x, float y) {  //check if a position collides with the snakes body
+     for(int i = 0; i < body.size(); i++) {
+        if(x == body.get(i).x && y == body.get(i).y)  {
+           return true;
+        }
+     }
+     return false;
+  }
+  
+  boolean foodCollide(float x, float y) {  //check if a position collides with the food
+     if(x == food.pos.x && y == food.pos.y) {
+         return true;
+     }
+     return false;
   }
   
   void think() {  //think about what direction to move

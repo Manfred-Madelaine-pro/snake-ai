@@ -1,6 +1,17 @@
+
 final int SIZE = 20;
-final int hidden_nodes = 16;
-final int hidden_layers = 2;
+
+final int WIDTH = 1200;
+final int HEIGHT = 800;
+
+final int GRID = 400;
+final int X_GRID = WIDTH-GRID;
+final int GAP = 40;
+
+
+
+final int HIDDEN_NODES = 16;
+final int HIDDEN_LAYERS = 2;
 final int fps = 150;  //15 is ideal for self play, increasing for AI does not directly increase speed, speed is dependant on processing power
 
 int highscore = 0;
@@ -10,7 +21,7 @@ float defaultmutation = mutationRate;
 
 boolean humanPlaying = false;  //false for AI, true to play yourself
 boolean replayBest = true;  //shows only the best of each generation
-boolean seeVision = false;  //see the snakes vision
+boolean seeVision = true;  //see the snakes vision
 boolean modelLoaded = false;
 
 PFont font;
@@ -32,7 +43,7 @@ Population pop;
 
 
 public void settings() {
-  size(1200,800);
+  size(WIDTH, HEIGHT);
 }
 
 void setup() {
@@ -55,11 +66,11 @@ void setup() {
 
 void draw() {
   background(0);
-  noFill();
+  // noFill();
   stroke(255);
-  line(400,0,400,height);
+  line(GRID, 0, GRID, HEIGHT);
   rectMode(CORNER);
-  rect(400 + SIZE,SIZE,width-400-40,height-40);
+  rect(GRID+SIZE, SIZE, WIDTH-GRID-GAP, HEIGHT-GAP);
   textFont(font);
 
   if(humanPlaying) {
@@ -146,8 +157,8 @@ void fileSelectedIn(File selection) {
     String path = selection.getAbsolutePath();
     Table modelTable = loadTable(path,"header");
     Matrix[] weights = new Matrix[modelTable.getColumnCount()-1];
-    float[][] in = new float[hidden_nodes][25];
-    for(int i=0; i< hidden_nodes; i++) {
+    float[][] in = new float[HIDDEN_NODES][25];
+    for(int i=0; i< HIDDEN_NODES; i++) {
       for(int j=0; j< 25; j++) {
         in[i][j] = modelTable.getFloat(j+i*25,"L0");
       }  
@@ -155,19 +166,19 @@ void fileSelectedIn(File selection) {
     weights[0] = new Matrix(in);
     
     for(int h=1; h<weights.length-1; h++) {
-       float[][] hid = new float[hidden_nodes][hidden_nodes+1];
-       for(int i=0; i< hidden_nodes; i++) {
-          for(int j=0; j< hidden_nodes+1; j++) {
-            hid[i][j] = modelTable.getFloat(j+i*(hidden_nodes+1),"L"+h);
+       float[][] hid = new float[HIDDEN_NODES][HIDDEN_NODES+1];
+       for(int i=0; i< HIDDEN_NODES; i++) {
+          for(int j=0; j< HIDDEN_NODES+1; j++) {
+            hid[i][j] = modelTable.getFloat(j+i*(HIDDEN_NODES+1),"L"+h);
           }  
        }
        weights[h] = new Matrix(hid);
     }
     
-    float[][] out = new float[4][hidden_nodes+1];
+    float[][] out = new float[4][HIDDEN_NODES+1];
     for(int i=0; i< 4; i++) {
-      for(int j=0; j< hidden_nodes+1; j++) {
-        out[i][j] = modelTable.getFloat(j+i*(hidden_nodes+1),"L"+(weights.length-1));
+      for(int j=0; j< HIDDEN_NODES+1; j++) {
+        out[i][j] = modelTable.getFloat(j+i*(HIDDEN_NODES+1),"L"+(weights.length-1));
       }  
     }
     weights[weights.length-1] = new Matrix(out);
