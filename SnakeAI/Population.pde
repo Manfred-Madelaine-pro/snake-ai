@@ -24,23 +24,16 @@ class Population {
          if(!snakes[i].dead)
            return false;
       }
-      if(!bestSnake.dead) {
-         return false; 
-      }
-      return true;
+      return bestSnake.dead;
    }
    
    void update() {  //update all the snakes in the generation
       if(!bestSnake.dead) {  //if the best snake is not dead update it, this snake is a replay of the best from the past generation
-         bestSnake.look();
-         bestSnake.think();
-         bestSnake.move();
+         bestSnake.turn();
       }
       for(int i = 0; i < snakes.length; i++) {
         if(!snakes[i].dead) {
-           snakes[i].look();
-           snakes[i].think();
-           snakes[i].move(); 
+           snakes[i].turn();
         }
       }
    }

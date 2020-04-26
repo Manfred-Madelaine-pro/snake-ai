@@ -48,15 +48,18 @@ class Snake {
      decision = new float[4];
      body = new ArrayList<PVector>();
      foodList = new ArrayList<Food>(foods.size());
+     
      for(Food f: foods) {  //clone all the food positions in the foodlist
        foodList.add(f.clone());
-     }
+     };
+     
      food = foodList.get(foodItterate);
      foodItterate++;
+     
      head = new PVector(800,height/2);
      body.add(new PVector(800,(height/2)+SIZE));
      body.add(new PVector(800,(height/2)+(2*SIZE)));
-     score+=2;
+     score += 2;
   }
   
   boolean bodyCollide(float x, float y) {  //check if a position collides with the snakes body
@@ -95,26 +98,6 @@ class Snake {
        fill(255);
      }
      rect(head.x,head.y,SIZE,SIZE);
-  }
-  
-  void move() {  //move the snake
-     if(!dead){
-       if(!humanPlaying && !modelLoaded) {
-         lifetime++;
-         lifeLeft--;
-       }
-       if(foodCollide(head.x,head.y)) {
-          eat();
-       }
-       shiftBody();
-       if(wallCollide(head.x,head.y)) {
-         dead = true;
-       } else if(bodyCollide(head.x,head.y)) {
-         dead = true;
-       } else if(lifeLeft <= 0 && !humanPlaying) {
-          dead = true;
-       }
-     }
   }
   
   void eat() {  //eat food
@@ -196,41 +179,36 @@ class Snake {
         fitness *= (score-9);
      }
   }
+
+  void turn () {
+      look();
+      think();
+      move();
+  }
   
   void look() {  //look in all 8 directions and check for food, body and wall
-    vision = new float[24];
-    float[] temp = lookInDirection(new PVector(-SIZE,0));
-    vision[0] = temp[0];
-    vision[1] = temp[1];
-    vision[2] = temp[2];
-    temp = lookInDirection(new PVector(-SIZE,-SIZE));
-    vision[3] = temp[0];
-    vision[4] = temp[1];
-    vision[5] = temp[2];
-    temp = lookInDirection(new PVector(0,-SIZE));
-    vision[6] = temp[0];
-    vision[7] = temp[1];
-    vision[8] = temp[2];
-    temp = lookInDirection(new PVector(SIZE,-SIZE));
-    vision[9] = temp[0];
-    vision[10] = temp[1];
-    vision[11] = temp[2];
-    temp = lookInDirection(new PVector(SIZE,0));
-    vision[12] = temp[0];
-    vision[13] = temp[1];
-    vision[14] = temp[2];
-    temp = lookInDirection(new PVector(SIZE,SIZE));
-    vision[15] = temp[0];
-    vision[16] = temp[1];
-    vision[17] = temp[2];
-    temp = lookInDirection(new PVector(0,SIZE));
-    vision[18] = temp[0];
-    vision[19] = temp[1];
-    vision[20] = temp[2];
-    temp = lookInDirection(new PVector(-SIZE,SIZE));
-    vision[21] = temp[0];
-    vision[22] = temp[1];
-    vision[23] = temp[2];
+    PVector[] directions = {
+      new PVector(SIZE,SIZE),
+      new PVector(SIZE, 0),
+      new PVector(SIZE,-SIZE),
+      new PVector(0,SIZE),
+
+      new PVector(0,-SIZE),
+      new PVector(-SIZE,SIZE),
+      new PVector(-SIZE,0),
+      new PVector(-SIZE,-SIZE)
+    };
+
+    int nb_infos = 3;
+    vision = new float[directions.length*nb_infos];
+
+    for(int i = 0; i < directions.length; i++) {
+      float[] temp = lookInDirection(directions[i]);
+
+      vision[i*nb_infos] = temp[0];
+      vision[i*nb_infos + 1] = temp[1];
+      vision[i*nb_infos + 2] = temp[2];
+    }
   }
 
   float[] lookInDirection(PVector direction) {  //look in a direction and check for food, body and wall
@@ -304,6 +282,26 @@ class Snake {
            moveRight();
            break;
       }
+  }
+  
+  void move() {  //move the snake
+     if(!dead){
+       if(!humanPlaying && !modelLoaded) {
+         lifetime++;
+         lifeLeft--;
+       }
+       if(foodCollide(head.x,head.y)) {
+          eat();
+       }
+       shiftBody();
+       if(wallCollide(head.x,head.y)) {
+         dead = true;
+       } else if(bodyCollide(head.x,head.y)) {
+         dead = true;
+       } else if(lifeLeft <= 0 && !humanPlaying) {
+          dead = true;
+       }
+     }
   }
   
   void moveUp() { 
