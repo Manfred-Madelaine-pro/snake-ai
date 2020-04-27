@@ -1,5 +1,5 @@
 class Snake {
-   
+
   int score = 1;
   int lifeLeft = 50;  //amount of moves the snake can make before it dies
   int lifetime = 0;  //amount of time the snake has been alive
@@ -23,6 +23,8 @@ class Snake {
   
   Food food;
   NeuralNet brain;
+
+  // int colors = {2};
   
   Snake() {
     this(HIDDEN_LAYERS);
@@ -67,41 +69,43 @@ class Snake {
   }
 
   void show() {  //show the snake
-     food.show();
-     fill(255);
-     stroke(0);
-     for(int i = 0; i < body.size(); i++) {
-       rect(body.get(i).x,body.get(i).y,SIZE,SIZE);
-     }
-     if(dead) {
-       fill(150);
-     } else {
-       fill(255);
-     }
-     rect(head.x,head.y,SIZE,SIZE);
+    food.show();
+    fill(255);
+    stroke(0);
+    for(int i = 0; i < body.size(); i++) {
+      rect(body.get(i).x,body.get(i).y,SIZE,SIZE);
+    }
+    if(dead) {
+      fill(150); // TODO
+    } else {
+      fill(255);
+    }
+    rect(head.x,head.y,SIZE,SIZE);
   }
-  
+
   void eat() {  //eat food
     int len = body.size()-1;
     score++;
     if(!humanPlaying && !modelLoaded) {
       if(lifeLeft < 500) {
         if(lifeLeft > 400) {
-           lifeLeft = 500; 
+          lifeLeft = 500; 
         } else {
           lifeLeft+=100;
         }
       }
     }
+    
     if(len >= 0) {
       body.add(new PVector(body.get(len).x,body.get(len).y));
     } else {
       body.add(new PVector(head.x,head.y)); 
     }
+
     if(!replay) {
       food = new Food();
-      while(bodyCollide(food.pos.x,food.pos.y)) {
-         food = new Food();
+      while(bodyCollision(food.pos)) {
+        food = new Food();
       }
       if(!humanPlaying) {
         foodList.add(food);
@@ -115,58 +119,61 @@ class Snake {
   void shiftBody() {  //shift the body to follow the head
     float tempx = head.x;
     float tempy = head.y;
+    
     head.x += xVel;
     head.y += yVel;
+    
     float temp2x;
     float temp2y;
+
     for(int i = 0; i < body.size(); i++) {
-       temp2x = body.get(i).x;
-       temp2y = body.get(i).y;
-       body.get(i).x = tempx;
-       body.get(i).y = tempy;
-       tempx = temp2x;
-       tempy = temp2y;
+      temp2x = body.get(i).x;
+      temp2y = body.get(i).y;
+      body.get(i).x = tempx;
+      body.get(i).y = tempy;
+      tempx = temp2x;
+      tempy = temp2y;
     } 
   }
-  
+
   Snake cloneForReplay() {  //clone a version of the snake that will be used for a replay
-     Snake clone = new Snake(foodList);
-     clone.brain = brain.clone();
-     return clone;
+    Snake clone = new Snake(foodList);
+    clone.brain = brain.clone();
+    return clone;
   }
-  
+
   Snake clone() {  //clone the snake
-     Snake clone = new Snake(HIDDEN_LAYERS);
-     clone.brain = brain.clone();
-     return clone;
+    Snake clone = new Snake(HIDDEN_LAYERS);
+    clone.brain = brain.clone();
+    return clone;
   }
-  
+
   Snake crossover(Snake parent) {  //crossover the snake with another snake
-     Snake child = new Snake(HIDDEN_LAYERS);
-     child.brain = brain.crossover(parent.brain);
-     return child;
+    Snake child = new Snake(HIDDEN_LAYERS);
+    child.brain = brain.crossover(parent.brain);
+    return child;
   }
-  
+
   void mutate() {  //mutate the snakes brain
-     brain.mutate(mutationRate); 
+    brain.mutate(mutationRate); 
   }
-  
+
   void calculateFitness() {  //calculate the fitness of the snake
-     if(score < 10) {
-        fitness = floor(lifetime * lifetime) * pow(2,score); 
-     } else {
-        fitness = floor(lifetime * lifetime);
-        fitness *= pow(2,10);
-        fitness *= (score-9);
-     }
+    if(score < 10) {
+      fitness = floor(lifetime * lifetime) * pow(2,score); 
+    } else {
+      fitness = floor(lifetime * lifetime);
+      fitness *= pow(2,10);
+      fitness *= (score-9);
+    }
   }
 
   void turn () {
-      look();
-      think();
-      move();
+    look();
+    think();
+    move();
   }
-  
+
   void look() {  //look in all 8 directions and check for food, body and wall
     PVector[] directions = {
       new PVector(SIZE,SIZE),
@@ -194,41 +201,45 @@ class Snake {
   float[] lookInDirection(PVector direction) {  //look in a direction and check for food, body and wall
     float look[] = new float[nb_infos];
     PVector pos = new PVector(head.x,  head.y);
+    
     boolean foodFound = false;
     boolean bodyFound = false;
+    
     pos.add(direction);
     float distance = 1;
 
-    while (!wallCollide(pos.x, pos.y)) {
-      if(!foodFound && foodCollide(pos.x,pos.y)) {
+    while (!wallCollision(pos)) {
+      if(!foodFound && foodCollision(pos)) {
         foodFound = true;
         look[0] = 1;
       }
-      if(!bodyFound && bodyCollide(pos.x,pos.y)) {
-         bodyFound = true;
-         look[1] = 1;
+      if(!bodyFound && bodyCollision(pos)) {
+        bodyFound = true;
+        look[1] = 1;
       }
 
       if(replay && seeVision) {
-        stroke(0,255,0);
-        point(pos.x,pos.y);
-        if(foodFound) {
-           drawEllipse(pos,255,255,51);
-        }
-        if(bodyFound) {
-           drawEllipse(pos,102,0,102);
-        }
+        drawVision(pos, foodFound, bodyFound);
       }
+
       pos.add(direction);
       distance +=1;
     }
 
-    if(replay && seeVision) {
-       drawEllipse(pos,0,255,0);
-    }
-
     look[2] = 1/distance;
     return look;
+  }
+
+  void drawVision(PVector pos, boolean foodFound, boolean bodyFound) {
+    stroke(0,255,0);
+    point(pos.x,pos.y);
+
+    if(foodFound) {
+      drawEllipse(pos,255,255,51);
+    }
+    if(bodyFound) {
+      drawEllipse(pos,102,0,102);
+    }
   }
 
   void drawEllipse(PVector pos, int r, int g, int b) {
@@ -237,77 +248,81 @@ class Snake {
     ellipseMode(CENTER);
     ellipse(pos.x,pos.y,5,5); 
   }
-  
-  boolean wallCollide(float x, float y) {  //check if a position collides with the wall
-     if(x >= WIDTH-(SIZE) || x < GRID + SIZE || y >= HEIGHT-(SIZE) || y < SIZE) {
-       return true;
-     }
-     return false;
+
+  boolean wallCollision(PVector pos) {  //check if a position collides with the wall
+    return (pos.x >= WIDTH  - (SIZE)) 
+        || (pos.y >= HEIGHT - (SIZE)) 
+        || (pos.x <  SIZE + GRID) 
+        || (pos.y <  SIZE);
   }
 
-  boolean bodyCollide(float x, float y) {  //check if a position collides with the snakes body
-     for(int i = 0; i < body.size(); i++) {
-        if(x == body.get(i).x && y == body.get(i).y)  {
-           return true;
-        }
-     }
-     return false;
+  boolean bodyCollision(PVector pos) {  //check if a position collides with the snakes body
+    for(int i = 0; i < body.size(); i++) {
+      if(positionsCollide(pos, body.get(i))) {
+        return true;
+      }
+    } 
+    return false;
   }
-  
-  boolean foodCollide(float x, float y) {  //check if a position collides with the food
-     if(x == food.pos.x && y == food.pos.y) {
-         return true;
-     }
-     return false;
+
+  boolean foodCollision(PVector pos) {  //check if a position collides with the food
+    return positionsCollide(pos, food.pos);
   }
-  
+
+  boolean positionsCollide(PVector pos, PVector objectPos) {
+    if(pos.x == objectPos.x && pos.y == objectPos.y) {
+      return true;
+    }
+    return false;
+  }
+
   void think() {  //think about what direction to move
-      decision = brain.output(vision);
-      int maxIndex = 0;
-      float max = 0;
-      for(int i = 0; i < decision.length; i++) {
-        if(decision[i] > max) {
-          max = decision[i];
-          maxIndex = i;
-        }
+    decision = brain.output(vision);
+    int maxIndex = 0;
+    float max = 0;
+    for(int i = 0; i < decision.length; i++) {
+      if(decision[i] > max) {
+        max = decision[i];
+        maxIndex = i;
       }
-      
-      switch(maxIndex) {
-         case 0:
-           moveUp();
-           break;
-         case 1:
-           moveDown();
-           break;
-         case 2:
-           moveLeft();
-           break;
-         case 3: 
-           moveRight();
-           break;
-      }
+    }
+
+    switch(maxIndex) {
+      case 0:
+      moveUp();
+      break;
+      case 1:
+      moveDown();
+      break;
+      case 2:
+      moveLeft();
+      break;
+      case 3: 
+      moveRight();
+      break;
+    }  
   }
-  
+
   void move() {  //move the snake
-     if(!dead){
-       if(!humanPlaying && !modelLoaded) {
-         lifetime++;
-         lifeLeft--;
-       }
-       if(foodCollide(head.x,head.y)) {
-          eat();
-       }
-       shiftBody();
-       if(wallCollide(head.x,head.y)) {
-         dead = true;
-       } else if(bodyCollide(head.x,head.y)) {
-         dead = true;
-       } else if(lifeLeft <= 0 && !humanPlaying) {
-          dead = true;
-       }
-     }
+    if(!dead){
+      if(!humanPlaying && !modelLoaded) {
+        lifetime++;
+        lifeLeft--;
+      }
+      if(foodCollision(head)) {
+        eat();
+      }
+      shiftBody();
+      checkDeath();
+    }
   }
-  
+
+  void checkDeath(){
+    if(wallCollision(head) || bodyCollision(head) || lifeLeft <= 0 && !humanPlaying) {
+      dead = true;
+    }
+  }
+
   void moveUp() { 
     if(yVel!=SIZE) {
       xVel = 0; yVel = -SIZE;

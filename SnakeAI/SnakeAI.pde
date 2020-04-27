@@ -1,6 +1,4 @@
 
-final int SIZE = 20;
-
 final int WIDTH = 1200;
 final int HEIGHT = 800;
 
@@ -8,6 +6,7 @@ final int GRID = 400;
 final int X_GRID = WIDTH-GRID;
 final int GAP = 40;
 
+final int SIZE = 20; // Snake size
 
 
 final int HIDDEN_NODES = 16;
@@ -127,27 +126,26 @@ void draw() {
     //loadButton.show();
     // saveButton.show();
   }
-
 }
 
 void mousePressed() {
-   if(graphButton.collide(mouseX,mouseY)) {
-       graph = new EvolutionGraph();
-   }
-   if(loadButton.collide(mouseX,mouseY)) {
-       selectInput("Load Snake Model", "fileSelectedIn");
-   }
-   if(saveButton.collide(mouseX,mouseY)) {
-       selectOutput("Save Snake Model", "fileSelectedOut");
-   }
-   if(increaseMut.collide(mouseX,mouseY)) {
-      mutationRate *= 2;
-      defaultmutation = mutationRate;
-   }
-   if(decreaseMut.collide(mouseX,mouseY)) {
-      mutationRate /= 2;
-      defaultmutation = mutationRate;
-   }
+  if(graphButton.collide(mouseX,mouseY)) {
+    graph = new EvolutionGraph();
+  }
+  if(loadButton.collide(mouseX,mouseY)) {
+    selectInput("Load Snake Model", "fileSelectedIn");
+  }
+  if(saveButton.collide(mouseX,mouseY)) {
+    selectOutput("Save Snake Model", "fileSelectedOut");
+  }
+  if(increaseMut.collide(mouseX,mouseY)) {
+    mutationRate *= 2;
+    defaultmutation = mutationRate;
+  }
+  if(decreaseMut.collide(mouseX,mouseY)) {
+    mutationRate /= 2;
+    defaultmutation = mutationRate;
+  }
 }
 
 void fileSelectedIn(File selection) {
