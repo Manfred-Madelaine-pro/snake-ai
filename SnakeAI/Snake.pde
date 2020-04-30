@@ -70,15 +70,15 @@ class Snake {
 
   void show() {  //show the snake
     food.show();
-    fill(255);
+
     stroke(0);
-    for(int i = 0; i < body.size(); i++) {
-      rect(body.get(i).x,body.get(i).y,SIZE,SIZE);
-    }
+    fill(255);
     if(dead) {
       fill(150); // TODO
-    } else {
-      fill(255);
+    }
+
+    for(int i = 0; i < body.size(); i++) {
+      rect(body.get(i).x,body.get(i).y,SIZE,SIZE);
     }
     rect(head.x,head.y,SIZE,SIZE);
   }
@@ -117,23 +117,20 @@ class Snake {
   }
   
   void shiftBody() {  //shift the body to follow the head
-    float tempx = head.x;
-    float tempy = head.y;
-    
+    for(int i = body.size()-1; i >= 0; i--) { // loop over body's parts in reverse order
+      if (i == 0) { // shift to the head
+        shiftPos(body.get(i), head);
+      } else {
+        shiftPos(body.get(i), body.get(i-1));
+      }
+    }
     head.x += xVel;
     head.y += yVel;
-    
-    float temp2x;
-    float temp2y;
+  }
 
-    for(int i = 0; i < body.size(); i++) {
-      temp2x = body.get(i).x;
-      temp2y = body.get(i).y;
-      body.get(i).x = tempx;
-      body.get(i).y = tempy;
-      tempx = temp2x;
-      tempy = temp2y;
-    } 
+  void shiftPos(PVector oldPos, PVector newPos) {
+    oldPos.x = newPos.x;
+    oldPos.y = newPos.y;
   }
 
   Snake cloneForReplay() {  //clone a version of the snake that will be used for a replay
@@ -251,9 +248,9 @@ class Snake {
 
   boolean wallCollision(PVector pos) {  //check if a position collides with the wall
     return (pos.x >= WIDTH  - (SIZE)) 
-        || (pos.y >= HEIGHT - (SIZE)) 
-        || (pos.x <  SIZE + GRID) 
-        || (pos.y <  SIZE);
+    || (pos.y >= HEIGHT - (SIZE)) 
+    || (pos.x <  SIZE + GRID) 
+    || (pos.y <  SIZE);
   }
 
   boolean bodyCollision(PVector pos) {  //check if a position collides with the snakes body
